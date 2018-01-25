@@ -54,8 +54,8 @@ func main() {
 		}
 	}
 
-	fmt.Printf("logest concatenated word: %s\n", longestWord)
-	fmt.Printf("2-nd logest concatenated word: %s\n", preLongestWord)
+	fmt.Printf("the longest concatenated word: %s\n", longestWord)
+	fmt.Printf("2nd longest concatenated word: %s\n", preLongestWord)
 	fmt.Printf("total count of concatenated words - %d\n", totalWords)
 }
 
