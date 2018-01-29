@@ -5,12 +5,14 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strings"
+	"time"
 )
 
 var table = map[string]int{}
 var words = []string{}
+
 var (
+	wordLen        = 0
 	lenLong        = 0
 	lenNotSoLong   = 0
 	totalWords     = 0
@@ -26,49 +28,68 @@ func main() {
 	}
 	defer f.Close()
 
+	//read file, create map (dictionary) table and array words
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
 		words = append(words, scanner.Text())
 		table[scanner.Text()] = len(scanner.Text())
 	}
 
-	for i := 0; i < len(words)-1; i++ {
-		if len(words[i+1]) < len(words[i]) {
+	//measure execution time (just for fun)
+	start := time.Now().Nanosecond()
+
+	//search every word
+	for i := 0; i < len(words); i++ {
+		wordLen = len(words[i])
+		if wordLen == 0 {
 			continue
 		}
 
-		if strings.HasPrefix(words[i+1], words[i]) {
-			if scanSuffix(strings.TrimPrefix(words[i+1], words[i])) == "" {
-				totalWords++
-				if len(words[i+1]) >= lenLong {
-					lenLong = len(words[i+1])
-					longestWord = words[i+1]
-					continue
-				}
-				if len(words[i+1]) >= lenNotSoLong {
-					lenNotSoLong = len(words[i+1])
-					preLongestWord = words[i+1]
-					continue
-				}
+		//scan subwords in word
+		if scanPrefix(words[i]) {
+			totalWords++
+
+			//compare words lengths
+			if wordLen >= lenLong {
+				lenNotSoLong = lenLong
+				preLongestWord = longestWord
+				lenLong = wordLen
+				longestWord = words[i]
+				continue
+			}
+			if len(words[i]) >= lenNotSoLong {
+				lenNotSoLong = wordLen
+				preLongestWord = words[i]
+				continue
 			}
 		}
 	}
+
+	finish := time.Now().Nanosecond()
+	fmt.Printf("executed in: %d\n", finish-start)
 
 	fmt.Printf("the longest concatenated word: %s\n", longestWord)
 	fmt.Printf("2nd longest concatenated word: %s\n", preLongestWord)
 	fmt.Printf("total count of concatenated words - %d\n", totalWords)
 }
 
-func scanSuffix(s string) string {
+//recursively compare every prefix to words in dictionary
+func scanPrefix(s string) bool {
 	if len(s) == 0 {
-		return ""
+		return true
 	}
-	l, ok := table[s]
-	if ok {
-		return scanSuffix(string(s[l:]))
+	for i := 1; i <= len(s); i++ {
+		_, ok := table[s[:i]]
+		if ok {
+			if i == wordLen {
+				return false
+			}
+			if !scanPrefix(string(s[i:])) {
+				continue
+			} else {
+				return scanPrefix(s[i:])
+			}
+		}
 	}
-	if len(s) == 1 {
-		return " "
-	}
-	return scanSuffix(string(s[:len(s)-1]))
+	return false
 }
